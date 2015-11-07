@@ -13,7 +13,7 @@ Credits: Martin Tomasz
  
 #from pyvisa import visa
 import visa
-import unicodedata
+import csv
 
 rm = visa.ResourceManager()
 rm.list_resources()
@@ -30,39 +30,38 @@ ElectronicLoad.query('*IDN?')
 """
 
 # Initialization
-ElectronicLoad.write('CHAN 1')
+ElectronicLoad.write('CHAN 1')    # Selecting specific channel
 ElectronicLoad.write('INPUT ON')
 ElectronicLoad.write('MODE:CURR') # Setting up for constant current mode
 
-# Initializing arrays for storing values
+# Initializing arrays for storing values, not necessary as of now
 Battery_Voltage = [] 
 Battery_Current = []
 Battery_Power   = []
 
-output = open("ElectronicLoadData.csv","w")
-variables = ['Battery Voltage' + 'Battery Power' + "\n"] 
-output.writelines(variables)
+output = csv.writer(open("ElectronicLoadData.csv","w"))
+
+output.writerow(["Battery Voltage","Battery Current","Battery Power"])
  
- 
+Discharge_Current = 5 # Amps
 ElectronicLoad.write('CURR 5') ## change this to required discharge current rate
 
 n = 20000
 
 for i in range(1,n):
-    i = i + 1
+    
     bat_volt  = float(ElectronicLoad.query('MEAS:VOLT?'))
     bat_power = float(ElectronicLoad.query('MEAS:POW?'))
-    print "Battery Voltage = ", bat_volt, bat_power
+    print "Bat Volt", bat_volt, "bat power", bat_power
     
     Battery_Voltage.append(bat_volt)
     Battery_Power.append(bat_power)
-    
-    output_data = bat_volt + bat_power
-    store = [str(output_data) + "\n"]
-    output.writelines(store)
 
+    output.writerow([bat_volt,Discharge_Current,bat_power])
+
+    i = i + 1
     
-    if bat_volt <= 22.120:
+    if bat_volt <= 21.1:
         ElectronicLoad.write('INPUT OFF')
         break
     
